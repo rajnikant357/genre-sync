@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Music, Upload, Sparkles } from "lucide-react";
+import { Music, Upload, Sparkles, Mic } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PredictionForm from "@/components/PredictionForm";
 import BatchUpload from "@/components/BatchUpload";
+import AudioUpload from "@/components/AudioUpload";
 import { Card } from "@/components/ui/card";
 
 const Index = () => {
@@ -22,7 +23,7 @@ const Index = () => {
           </h1>
           <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
             Analyze music features and predict genres with machine learning. 
-            Get instant predictions or process tracks in bulk.
+            Manual input, audio upload, or batch CSV processing.
           </p>
         </div>
       </div>
@@ -31,19 +32,27 @@ const Index = () => {
       <div className="max-w-4xl mx-auto px-4 -mt-16">
         <Card className="p-6 shadow-glow border-border/50 backdrop-blur-sm">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
               <TabsTrigger value="predict" className="flex items-center gap-2">
                 <Music className="w-4 h-4" />
-                Single Prediction
+                Manual Input
+              </TabsTrigger>
+              <TabsTrigger value="audio" className="flex items-center gap-2">
+                <Mic className="w-4 h-4" />
+                Upload Audio
               </TabsTrigger>
               <TabsTrigger value="batch" className="flex items-center gap-2">
                 <Upload className="w-4 h-4" />
-                Batch Upload
+                Batch CSV
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="predict">
               <PredictionForm />
+            </TabsContent>
+            
+            <TabsContent value="audio">
+              <AudioUpload />
             </TabsContent>
             
             <TabsContent value="batch">
@@ -65,11 +74,11 @@ const Index = () => {
           </div>
           <div className="text-center p-6">
             <div className="w-12 h-12 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-6 h-6 text-accent" />
+              <Mic className="w-6 h-6 text-accent" />
             </div>
-            <h3 className="font-semibold mb-2">AI Predictions</h3>
+            <h3 className="font-semibold mb-2">Audio Analysis</h3>
             <p className="text-sm text-muted-foreground">
-              Machine learning model trained on thousands of tracks
+              Upload audio files and extract features automatically
             </p>
           </div>
           <div className="text-center p-6">
