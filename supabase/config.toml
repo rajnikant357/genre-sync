@@ -1,0 +1,4 @@
+project_id = "ojwkjysyvipnxjftjdkj"
+
+[functions.predict-genre]
+verify_jwt = false

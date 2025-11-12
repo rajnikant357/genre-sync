@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import ResultsDisplay from "./ResultsDisplay";
 
-const MUSIC_KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const MUSIC_KEYS = ["A", "Am", "Bb", "C", "D", "D#", "E", "Em", "F", "F#", "G", "G#"];
 
 interface PredictionResult {
   predicted_genre: string;
@@ -33,7 +33,7 @@ const PredictionForm = () => {
     setResult(null);
 
     try {
-      const response = await fetch("http://localhost:5000/api/predict", {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/predict-genre`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,14 +50,15 @@ const PredictionForm = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Prediction failed. Make sure Flask backend is running on localhost:5000");
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || "Prediction failed");
       }
 
       const data = await response.json();
       setResult(data);
       toast.success("Genre predicted successfully!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to connect to backend");
+      toast.error(error instanceof Error ? error.message : "Failed to make prediction");
       console.error("Prediction error:", error);
     } finally {
       setLoading(false);

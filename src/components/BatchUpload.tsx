@@ -38,35 +38,62 @@ const BatchUpload = () => {
     setResult(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch("http://localhost:5000/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Upload failed. Make sure Flask backend is running on localhost:5000");
+      // Parse CSV and make predictions for each row
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',');
+      
+      // Validate CSV format
+      const requiredCols = ['tempo', 'energy', 'danceability', 'loudness', 'acousticness', 'instrumentalness', 'key'];
+      const hasAllCols = requiredCols.every(col => headers.some(h => h.trim().toLowerCase() === col));
+      
+      if (!hasAllCols) {
+        throw new Error('CSV must contain: tempo, energy, danceability, loudness, acousticness, instrumentalness, key');
       }
 
-      // Parse HTML response to extract counts
-      const html = await response.text();
-      // This is a simplified parser - in production you'd want proper HTML parsing
-      // For now, we'll show a success message
-      toast.success("Batch prediction completed! Check Flask server for results.");
+      const predictions: string[] = [];
       
-      // Mock result for demo purposes
-      setResult({
-        counts: {
-          "Pop": 15,
-          "Rock": 12,
-          "Classical": 8,
-          "Jazz": 5
+      // Process each row
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        if (values.length < headers.length) continue;
+        
+        const row: Record<string, string> = {};
+        headers.forEach((header, idx) => {
+          row[header.trim().toLowerCase()] = values[idx]?.trim();
+        });
+
+        // Make prediction for this row
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/predict-genre`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tempo: parseFloat(row.tempo),
+            energy: parseFloat(row.energy),
+            danceability: parseFloat(row.danceability),
+            loudness: parseFloat(row.loudness),
+            acousticness: parseFloat(row.acousticness),
+            instrumentalness: parseFloat(row.instrumentalness),
+            key: row.key || 'C'
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          predictions.push(data.predicted_genre);
         }
+      }
+
+      // Count predictions
+      const counts: Record<string, number> = {};
+      predictions.forEach(genre => {
+        counts[genre] = (counts[genre] || 0) + 1;
       });
+
+      setResult({ counts });
+      toast.success(`Processed ${predictions.length} tracks!`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to upload file");
+      toast.error(error instanceof Error ? error.message : "Failed to process file");
       console.error("Upload error:", error);
     } finally {
       setLoading(false);
@@ -140,7 +167,7 @@ const BatchUpload = () => {
             ))}
           </div>
           <p className="text-sm text-muted-foreground mt-4">
-            Results saved on Flask server. Check the uploads folder for the complete CSV with predictions.
+            Total tracks processed: {Object.values(result.counts).reduce((a, b) => a + b, 0)}
           </p>
         </Card>
       )}
